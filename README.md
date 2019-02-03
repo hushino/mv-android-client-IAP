@@ -13,6 +13,8 @@ A basic tutorial for MV Android Client is hosted at HBGames.org at the following
 
 Usage support is provided with this tutorial.
 
+You just do the provided tutorial after downloading the git files.
+
 ## IAP setting
 
 In addition, you only need to modify two parts of the WebPlayerActivity.java file to implement the IAP services.
