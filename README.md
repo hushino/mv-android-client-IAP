@@ -2,7 +2,7 @@
 
 The MV Android Client with IAP is a runtime client which supports IAP services for the [Android&trade; operating system](https://www.android.com) intended to play games created with the [RPG Maker MV](http://www.rpgmakerweb.com) game development tool-kit.
 
-There are a lot of marketing advantages to distribute demo games before distributing paid games on the Android system. This client can provide demo version and full version simultaneously by supporting in-app purchase.
+There are a lot of marketing advantages to distribute demo games before distributing paid games on the Android system. This client can provide demo version and full version simultaneously by supporting In-app Purchase.
 
 I just integrated [MV Android Client](https://github.com/AltimitSystems/mv-android-client) and [Android In-app Billing Version 3](https://github.com/anjlab/android-inapp-billing-v3).
 
@@ -13,7 +13,7 @@ A basic tutorial for MV Android Client is hosted at HBGames.org at the following
 
 Usage support is provided with this tutorial.
 
-You just do the provided tutorial after downloading this git files.
+You just follow the provided tutorial after downloading this git files.
 
 ## IAP setting
 
