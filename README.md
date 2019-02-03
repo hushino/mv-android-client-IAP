@@ -13,7 +13,7 @@ A basic tutorial for MV Android Client is hosted at HBGames.org at the following
 
 Usage support is provided with this tutorial.
 
-You just do the provided tutorial after downloading the git files.
+You just do the provided tutorial after downloading this git files.
 
 ## IAP setting
 
