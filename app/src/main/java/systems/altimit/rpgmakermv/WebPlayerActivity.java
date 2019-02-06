@@ -20,6 +20,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -33,13 +34,17 @@ import java.nio.charset.Charset;
 /**
  * Created by felixjones on 28/04/2017.
  */
-public class WebPlayerActivity extends Activity {
+public class WebPlayerActivity extends Activity implements BillingProcessor.IBillingHandler {
 
     private static final String TOUCH_INPUT_ON_CANCEL = "TouchInput._onCancel();";
 
     private Player mPlayer;
     private AlertDialog mQuitDialog;
     private int mSystemUiVisibility;
+
+    //iap
+    private BillingProcessor bp;
+    private static final String PRODUCT_ID = "SKU";
 
     @SuppressLint("ObsoleteSdkInt")
     @Override
@@ -48,6 +53,10 @@ public class WebPlayerActivity extends Activity {
         if (BuildConfig.BACK_BUTTON_QUITS) {
             createQuitDialog();
         }
+
+        //iap
+        bp = BillingProcessor.newBillingProcessor(this, "LICENSE_KEY", this);
+        bp.initialize();
 
         mSystemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 
@@ -63,6 +72,9 @@ public class WebPlayerActivity extends Activity {
         }
 
         mPlayer = PlayerHelper.create(this);
+
+        //iap
+        mPlayer.addJavascriptInterface(this, "IAP");
 
         mPlayer.setKeepScreenOn();
 
@@ -121,6 +133,10 @@ public class WebPlayerActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        //iap
+        if (bp != null) {
+            bp.release();
+        }
         super.onDestroy();
         mPlayer.onDestroy();
     }
@@ -128,6 +144,14 @@ public class WebPlayerActivity extends Activity {
     @Override
     protected void onRestart() {
         super.onRestart();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //iap
+        if (!bp.handleActivityResult(requestCode, resultCode, data)) {
+            super.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     private void createQuitDialog() {
@@ -174,6 +198,50 @@ public class WebPlayerActivity extends Activity {
         }
         return false;
     }
+
+    //iap
+    @Override
+    public void onProductPurchased(@NonNull String productId, @Nullable TransactionDetails details) {
+        finish();
+        startActivity(getIntent());
+    }
+
+    @Override
+    public void onPurchaseHistoryRestored() {
+
+    }
+
+    @Override
+    public void onBillingError(int errorCode, @Nullable Throwable error) {
+        finish();
+        startActivity(getIntent());
+    }
+
+    @Override
+    public void onBillingInitialized() {
+        // purchase verification
+        bp.loadOwnedPurchasesFromGoogle();
+        if (bp.isPurchased(PRODUCT_ID)) {
+            showToast("Full version");
+        } else {
+            showToast("Demo version");
+        }
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+    }
+
+    @JavascriptInterface
+    public void purchaseGame() {
+        bp.purchase(this, PRODUCT_ID);
+    }
+
+    @JavascriptInterface
+    public boolean purchased() {
+        return bp.isPurchased(PRODUCT_ID);
+    }
+
 
     /**
      *
