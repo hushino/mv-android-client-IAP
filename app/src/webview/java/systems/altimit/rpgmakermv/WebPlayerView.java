@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 Altimit Community Contributors
+ * Copyright (c) 2017-2019 Altimit Community Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,6 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-
-import java.util.LinkedList;
-import java.util.Queue;
 
 /**
  * Created by felixjones on 28/04/2017.
@@ -72,11 +69,11 @@ public class WebPlayerView extends WebView {
         WebSettings webSettings = getSettings();
         webSettings.setAllowContentAccess(true);
         webSettings.setAllowFileAccess(true);
-        webSettings.setLoadsImagesAutomatically(true);
-        webSettings.setDomStorageEnabled(true);
         webSettings.setAppCacheEnabled(true);
         webSettings.setDatabaseEnabled(true);
         webSettings.setDatabasePath(context.getDir("database", Context.MODE_PRIVATE).getPath());
+        webSettings.setDomStorageEnabled(true);
+        webSettings.setLoadsImagesAutomatically(true);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             webSettings.setAllowFileAccessFromFileURLs(true);
@@ -85,11 +82,6 @@ public class WebPlayerView extends WebView {
         
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR2) {
             webSettings.setRenderPriority(WebSettings.RenderPriority.HIGH);
-        }        
-        
-        //fix font size
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
-            webSettings.setTextZoom(100);
         }
 
         //fix font size
@@ -157,11 +149,6 @@ public class WebPlayerView extends WebView {
             view.setBackgroundColor(Color.WHITE);
         }
 
-        @Override
-        public void onPageFinished(WebView view, String url) {
-            mPlayer.onPageFinished();
-        }
-
     }
 
     /**
@@ -170,11 +157,9 @@ public class WebPlayerView extends WebView {
     private static final class WebPlayer implements Player {
 
         private WebPlayerView mWebView;
-        private Queue<Runnable> mOnPageFinishedActions;
 
         private WebPlayer(WebPlayerView webView) {
             mWebView = webView;
-            mOnPageFinishedActions = new LinkedList<>();
         }
 
         @Override
@@ -188,8 +173,7 @@ public class WebPlayerView extends WebView {
         }
 
         @Override
-        public void loadUrl(String url, Runnable onLoad) {
-            mOnPageFinishedActions.add(onLoad);
+        public void loadUrl(String url) {
             mWebView.loadUrl(url);
         }
 
@@ -206,7 +190,7 @@ public class WebPlayerView extends WebView {
 
         @Override
         public void loadData(String data) {
-            mWebView.loadData(data, "text/html", "UTF-8");
+            mWebView.loadData(data, "text/html", "base64");
         }
 
         @Override
@@ -251,12 +235,6 @@ public class WebPlayerView extends WebView {
         @Override
         public void onDestroy() {
             mWebView.destroy();
-        }
-
-        void onPageFinished() {
-            while (!mOnPageFinishedActions.isEmpty()) {
-                mOnPageFinishedActions.remove().run();
-            }
         }
 
     }
