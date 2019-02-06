@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 Altimit Community Contributors
+ * Copyright (c) 2017-2019 Altimit Community Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package systems.altimit.rpgmakermv;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -23,25 +24,12 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.util.Base64;
 import android.view.View;
-import android.webkit.JavascriptInterface;
-import android.widget.Toast;
-
-import com.anjlab.android.iab.v3.BillingProcessor;
-import com.anjlab.android.iab.v3.TransactionDetails;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
-import systems.altimit.clientapi.AbstractExtension;
 
 /**
  * Created by felixjones on 28/04/2017.
@@ -51,7 +39,6 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
     private static final String TOUCH_INPUT_ON_CANCEL = "TouchInput._onCancel();";
 
     private Player mPlayer;
-    private List<AbstractExtension> mExtensions;
     private AlertDialog mQuitDialog;
     private int mSystemUiVisibility;
 
@@ -59,6 +46,7 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
     private BillingProcessor bp;
     private static final String PRODUCT_ID = "SKU";
 
+    @SuppressLint("ObsoleteSdkInt")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,35 +76,17 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
         //iap
         mPlayer.addJavascriptInterface(this, "IAP");
 
-        mExtensions = new ArrayList<>();
-        if ("webview".equals(BuildConfig.FLAVOR)) {
-            try {
-                for (String extensionClass : BuildConfig.EXTENSION_CLASSES) {
-                    mExtensions.add((AbstractExtension) Class.forName(extensionClass).getConstructor(Context.class).newInstance(this));
-                }
-            } catch (Exception e) {
-                e.printStackTrace(); // A bad extension will fail and print a stack-trace
-            }
-        }
-
         mPlayer.setKeepScreenOn();
+
         setContentView(mPlayer.getView());
 
-        List<String> extensionSources = new ArrayList<>();
-        for (AbstractExtension extension : mExtensions) {
-            for (Map.Entry<String, Object> entry : extension.getJavascriptInterfaces().entrySet()) {
-                mPlayer.addJavascriptInterface(entry.getValue(), entry.getKey());
-            }
-            extensionSources.addAll(Arrays.asList(extension.getJavascriptSources()));
-        }
-
-        if (!addBootstrapInterface(mPlayer, extensionSources)) {
+        if (!addBootstrapInterface(mPlayer)) {
             Uri.Builder projectURIBuilder = Uri.fromFile(new File(getString(R.string.mv_project_index))).buildUpon();
             Bootstrapper.appendQuery(projectURIBuilder, getString(R.string.query_noaudio));
             if (BuildConfig.SHOW_FPS) {
                 Bootstrapper.appendQuery(projectURIBuilder, getString(R.string.query_showfps));
             }
-            mPlayer.loadUrl(projectURIBuilder.build().toString(), new SourceListEvaluator(mPlayer, extensionSources));
+            mPlayer.loadUrl(projectURIBuilder.build().toString());
         }
     }
 
@@ -136,16 +106,10 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
     @Override
     protected void onStart() {
         super.onStart();
-        for (AbstractExtension extension : mExtensions) {
-            extension.onStart();
-        }
     }
 
     @Override
     protected void onStop() {
-        for (AbstractExtension extension : mExtensions) {
-            extension.onStop();
-        }
         super.onStop();
     }
 
@@ -154,9 +118,6 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
         mPlayer.pauseTimers();
         mPlayer.onHide();
 
-        for (AbstractExtension extension : mExtensions) {
-            extension.onPause();
-        }
         super.onPause();
     }
 
@@ -167,10 +128,6 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
         if (mPlayer != null) {
             mPlayer.resumeTimers();
             mPlayer.onShow();
-
-            for (AbstractExtension extension : mExtensions) {
-                extension.onResume();
-            }
         }
     }
 
@@ -182,27 +139,15 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
         }
         super.onDestroy();
         mPlayer.onDestroy();
-
-        for (AbstractExtension extension : mExtensions) {
-            extension.onDestroy();
-        }
     }
 
     @Override
     protected void onRestart() {
         super.onRestart();
-        for (AbstractExtension extension : mExtensions) {
-            extension.onRestart();
-        }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        for (AbstractExtension extension : mExtensions) {
-            extension.onActivityResult(requestCode, resultCode, data);
-        }
-
-
         //iap
         if (!bp.handleActivityResult(requestCode, resultCode, data)) {
             super.onActivityResult(requestCode, resultCode, data);
@@ -245,9 +190,10 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
         }
     }
 
-    private static boolean addBootstrapInterface(Player player, List<String> sources) {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            new Bootstrapper(player, sources);
+    @SuppressLint("ObsoleteSdkInt")
+    private static boolean addBootstrapInterface(Player player) {
+        if (BuildConfig.BOOTSTRAP_INTERFACE && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            new Bootstrapper(player);
             return true;
         }
         return false;
@@ -296,26 +242,6 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
         return bp.isPurchased(PRODUCT_ID);
     }
 
-    /**
-     *
-     */
-    private static final class SourceListEvaluator implements Runnable {
-
-        private Player mPlayer;
-        private List<String> mSources;
-
-        private SourceListEvaluator(Player player, List<String> sourceList) {
-            mPlayer = player;
-            mSources = sourceList;
-        }
-
-        @Override
-        public void run() {
-            for (String source : mSources) {
-                mPlayer.evaluateJavascript(source);
-            }
-        }
-    }
 
     /**
      *
@@ -335,17 +261,15 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
         private static final String PREPARE_FUNC = "prepare( webgl(), webaudio(), false )";
 
         private Player mPlayer;
-        private List<String> mExtensionSources;
         private Uri.Builder mURIBuilder;
 
-        private Bootstrapper(Player player, List<String> sourceList) {
+        private Bootstrapper(Player player) {
             Context context = player.getContext();
             player.addJavascriptInterface(this, Bootstrapper.INTERFACE);
 
             mPlayer = player;
-            mExtensionSources = sourceList;
             mURIBuilder = Uri.fromFile(new File(context.getString(R.string.mv_project_index))).buildUpon();
-            mPlayer.loadData(new String(Base64.decode(context.getString(R.string.webview_default_page), Base64.DEFAULT), Charset.forName("UTF-8")));
+            mPlayer.loadData(context.getString(R.string.webview_default_page));
         }
 
         @Override
@@ -378,7 +302,7 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
         @Override
         public void run() {
             mPlayer.removeJavascriptInterface(INTERFACE);
-            mPlayer.loadUrl(mURIBuilder.build().toString(), new SourceListEvaluator(mPlayer, mExtensionSources));
+            mPlayer.loadUrl(mURIBuilder.build().toString());
         }
 
     }
