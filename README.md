@@ -40,3 +40,7 @@ Download [my app](https://play.google.com/store/apps/details?id=com.blogspot.stu
 ## License
 
 The MV Android Client with In-app Purchase is under the [Apache License 2.0].
+
+## Terms of Use
+
+Free to use as long as credit is given to onlimono.
