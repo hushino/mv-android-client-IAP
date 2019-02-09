@@ -48,7 +48,8 @@ android {
     productFlavors {
         webview {
             dimension "mv_android_client"
-            minSdkVersion 26
+            minSdkVersion 16
+            targetSdkVersion 26
 
             buildConfigField "boolean", "BOOTSTRAP_INTERFACE", "true"
         }
