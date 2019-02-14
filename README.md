@@ -8,7 +8,7 @@ I just integrated [MV Android Client](https://github.com/AltimitSystems/mv-andro
 
 ## Tutorial & Usage Support
 
-A basic tutorial for MV Android Client is hosted at HBGames.org at the following URL:
+The basic tutorial for MV Android Client is hosted at HBGames.org at the following URL:
 [hbgames.org/forums/viewtopic.php?f=48&t=79391](http://www.hbgames.org/forums/viewtopic.php?f=48&t=79391)
 
 Usage support is provided with this tutorial.
