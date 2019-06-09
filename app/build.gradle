@@ -33,7 +33,7 @@ android {
          */
         applicationId "id.application.rpgmakermv" // Change this to your applicationId.
         versionCode 1 // Set this to a higher number for game updates.
-        versionName "1.0" // This is the version that the player sees.
+        versionName "1.0.0" // This is the version that the player sees.
     }
 
     buildTypes {
@@ -48,7 +48,7 @@ android {
     productFlavors {
         webview {
             dimension "mv_android_client"
-            minSdkVersion 16
+            minSdkVersion 19
             targetSdkVersion 26
 
             buildConfigField "boolean", "BOOTSTRAP_INTERFACE", "true"
