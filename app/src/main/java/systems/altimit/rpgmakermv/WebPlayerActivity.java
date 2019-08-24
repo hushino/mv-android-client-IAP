@@ -20,20 +20,12 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AlertDialog;
+import androidx.appcompat.app.AlertDialog;
 import android.util.Base64;
 import android.view.View;
-import android.webkit.JavascriptInterface;
-import android.widget.Toast;
-
-import com.anjlab.android.iab.v3.BillingProcessor;
-import com.anjlab.android.iab.v3.TransactionDetails;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -41,18 +33,14 @@ import java.nio.charset.Charset;
 /**
  * Created by felixjones on 28/04/2017.
  */
-public class WebPlayerActivity extends Activity implements BillingProcessor.IBillingHandler {
+public class WebPlayerActivity extends Activity {
 
     private static final String TOUCH_INPUT_ON_CANCEL = "TouchInput._onCancel();";
 
     private Player mPlayer;
     private AlertDialog mQuitDialog;
     private int mSystemUiVisibility;
-
-    //iap
-    private BillingProcessor bp;
-    private static final String PRODUCT_ID = "SKU";
-
+    
     @SuppressLint("ObsoleteSdkInt")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,10 +48,6 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
         if (BuildConfig.BACK_BUTTON_QUITS) {
             createQuitDialog();
         }
-
-        //iap
-        bp = BillingProcessor.newBillingProcessor(this, "LICENSE_KEY", this);
-        bp.initialize();
 
         mSystemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 
@@ -79,9 +63,6 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
         }
 
         mPlayer = PlayerHelper.create(this);
-
-        //iap
-        mPlayer.addJavascriptInterface(this, "IAP");
 
         mPlayer.setKeepScreenOn();
 
@@ -140,10 +121,6 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
 
     @Override
     protected void onDestroy() {
-        //iap
-        if (bp != null) {
-            bp.release();
-        }
         super.onDestroy();
         mPlayer.onDestroy();
     }
@@ -151,14 +128,6 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
     @Override
     protected void onRestart() {
         super.onRestart();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        //iap
-        if (!bp.handleActivityResult(requestCode, resultCode, data)) {
-            super.onActivityResult(requestCode, resultCode, data);
-        }
     }
 
     private void createQuitDialog() {
@@ -205,50 +174,6 @@ public class WebPlayerActivity extends Activity implements BillingProcessor.IBil
         }
         return false;
     }
-
-    //iap
-    @Override
-    public void onProductPurchased(@NonNull String productId, @Nullable TransactionDetails details) {
-        finish();
-        startActivity(getIntent());
-    }
-
-    @Override
-    public void onPurchaseHistoryRestored() {
-
-    }
-
-    @Override
-    public void onBillingError(int errorCode, @Nullable Throwable error) {
-        finish();
-        startActivity(getIntent());
-    }
-
-    @Override
-    public void onBillingInitialized() {
-        // purchase verification
-        bp.loadOwnedPurchasesFromGoogle();
-        if (bp.isPurchased(PRODUCT_ID)) {
-            showToast("Full version");
-        } else {
-            showToast("Demo version");
-        }
-    }
-
-    private void showToast(String message) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-    }
-
-    @JavascriptInterface
-    public void purchaseGame() {
-        bp.purchase(this, PRODUCT_ID);
-    }
-
-    @JavascriptInterface
-    public boolean purchased() {
-        return bp.isPurchased(PRODUCT_ID);
-    }
-
 
     /**
      *
