@@ -35,7 +35,7 @@ Now you can use two functions in RPG Maker MV.
 2) window.IAP.purchased()
 -> The function returns true if in-app is purchased.
 
-Download [my app](https://play.google.com/store/apps/details?id=com.blogspot.studiohns.essence_td_en) to test how it works.
+Download [my app](https://play.google.com/store/apps/details?id=com.blogspot.studiohns.essence_ab_en) to test how it works.
 
 ## License
 
